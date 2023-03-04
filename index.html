@@ -1,0 +1,168 @@
+<!-- I have hosted a javascript based web-page and I want to draw a plane in a sketch element. I want to be able to move the plane up and down, and draw a target icon somewhere. Please write the code for something like that.
+
+In addtion I want the target to move to a random y position every 5 seconds
+
+The window should be only 100 pixels wide, also the plane and the target should be in the same x position
+
+Now write a function that uses a PID controller that steers the plane towards the target in y direction. 
+
+multiply ki by 10, also make the background a nice suitable color. Also make the animation look more smooth
+
+Change ki to 0.0003. Make the background darker. Also make sure that "the middle" of the plane tracks the the middle of the target. In addition I want to be able to click on the canvas to move the target there. Omit the code for moving the target with arrow-keys. 
+
+The next thing I want is for each of the PID-variables to be controllable by sliders. Place sliders below the canvas. In addition try and center all of the elements to the center of the screen
+
+Make sure that the variables are actually being changed live when the sliders are moved. 
+
+(koden fungerer og kjøres ved å legge den i en fil "navn.html" og kjøre den i nettleseren) 
+
+-->
+
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Plane Sketch</title>
+    <style>
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background-color: #222222;
+        }
+
+        /* Set the width of the canvas to 100 pixels */
+        canvas {
+            width: 100px;
+            background-color: #333333;
+        }
+
+        /* Style the sliders */
+        .slider-container {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            margin-top: 30px;
+        }
+
+        .slider {
+            width: 200px;
+            margin-bottom: 20px;
+        }
+
+        .slider-label {
+            color: #FFFFFF;
+            font-size: 16px;
+            margin-bottom: 5px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <canvas id="canvas" width="100" height="500"></canvas>
+        <div class="slider-container">
+            <div class="slider-label">Kp</div>
+            <input type="range" min="0" max="1" step="0.01" value="0.05" class="slider" id="kp-slider">
+            <div class="slider-label">Ki</div>
+            <input type="range" min="0" max="0.01" step="0.0001" value="0.0003" class="slider" id="ki-slider">
+            <div class="slider-label">Kd</div>
+            <input type="range" min="0" max="0.1" step="0.001" value="0.01" class="slider" id="kd-slider">
+        </div>
+    </div>
+    <script>
+        // Get the canvas element and context
+        const canvas = document.getElementById("canvas");
+        const ctx = canvas.getContext("2d");
+
+        // Define some variables for the plane and target
+        let planeY = 250;
+        const planeWidth = 50;
+        const planeHeight = 20;
+        let targetY = 200;
+        const targetRadius = 10;
+        const positionX = 25;
+
+        // Get the slider elements
+        const kpSlider = document.getElementById("kp-slider");
+        const kiSlider = document.getElementById("ki-slider");
+        const kdSlider = document.getElementById("kd-slider");
+
+        // Define some variables for the PID controller
+        let Kp = parseFloat(kpSlider.value);
+        let Ki = parseFloat(kiSlider.value);
+        let Kd = parseFloat(kdSlider.value);
+        let lastError = 0;
+        let integral = 0;
+
+        // Function to draw the plane
+        function drawPlane() {
+            ctx.fillStyle = "#000000";
+            ctx.fillRect(positionX - planeWidth / 2, planeY - planeHeight / 2, planeWidth, planeHeight);
+        }
+
+        // Function to draw the target
+        function drawTarget() {
+            ctx.beginPath();
+            ctx.arc(positionX, targetY, targetRadius, 0, 2 * Math.PI);
+            ctx.fillStyle = "#FF0000";
+            ctx.fill();
+        }
+
+        // Function to clear the canvas and redraw everything
+        function redraw() {
+            // Clear the canvas
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // Draw the plane and target
+            drawPlane();
+            drawTarget();
+
+            Kp = parseFloat(kpSlider.value);
+            Ki = parseFloat(kiSlider.value);
+            Kd = parseFloat(kdSlider.value);
+        }
+
+        // Function to update the plane position using a PID controller
+        function updatePlane() {
+            // Calculate the error between the plane and target positions
+            const error = targetY - planeY;
+
+            // Update the integral and derivative terms of the PID controller
+            integral += error;
+            const derivative = error - lastError;
+
+            // Calculate the PID controller output
+            const output = Kp * error + Ki * integral + Kd * derivative;
+
+            // Update the plane position
+            planeY += output;
+
+            // Update the last error
+            lastError = error;
+
+            // Redraw the canvas
+            redraw();
+        }
+
+        // Add an event listener for canvas clicks
+        canvas.addEventListener("click", (event) => {
+            // Set the target position to the click position
+            targetY = event.offsetY;
+            redraw();
+        });
+
+        // Update plane and target positions every frame using PID controller
+        function animate() {
+            updatePlane();
+            requestAnimationFrame(animate);
+        }
+        animate();
+
+        // Initial drawing of the canvas
+        redraw();
+    </script>
+</body>
+
+</html>
